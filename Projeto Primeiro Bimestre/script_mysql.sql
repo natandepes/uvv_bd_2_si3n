@@ -1,4 +1,4 @@
-use bank;
+USE bank;
 
 -- ------------------------------------------------------------------------------------------------------- --
 -- 1) Escreva uma consulta que retorne o nome e sobrenome de todos os administradores (officer) com o nome --
