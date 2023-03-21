@@ -14,11 +14,12 @@ INNER JOIN customer cs ON (cs.cust_id = bi.cust_id);
 
 
 
+
+
 -- -------------------------------------------------------------------------------------------------------- --
 -- 2) Escreva uma consulta que retorne os nome dos clientes (nome das pessoas jurídicas ou nome + sobrenome --	
 -- das pessoas físicas) que possuem uma conta em uma cidade diferente da cidade de estabelecimento          --                                                    --
 -- -------------------------------------------------------------------------------------------------------- --
-DESC customer;
 
 SELECT 
 	CASE
