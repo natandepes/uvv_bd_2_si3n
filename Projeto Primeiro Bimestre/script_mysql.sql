@@ -21,14 +21,16 @@ INNER JOIN customer cs ON (cs.cust_id = bi.cust_id);
 -- das pessoas físicas) que possuem uma conta em uma cidade diferente da cidade de estabelecimento          --                                                    --
 -- -------------------------------------------------------------------------------------------------------- --
 
-SELECT 
-	CASE
-		WHEN cs.cust_type_cd = 'I' THEN CONCAT(ind.fname,'',ind.lname)
-        WHEN cs.cust_type_cd = 'B' THEN bi.name						
-	END AS Name
-FROM customer 		  cs
-INNER JOIN individual ind 	ON (cs.cust_id = ind.cust_id)
-INNER JOIN business   bi    ON (cs.cust_id = bi.cust_id)                    -- AINDA NÃO FUNCIONANDO !!!!!!
-INNER JOIN account 	  acc 	ON (cs.cust_id = acc.cust_id)
-INNER JOIN branch	  bc  	ON (acc.open_branch_id = bc.branch_id)
+SELECT DISTINCT CONCAT(ind.fname,' ', ind.lname) AS Clients
+FROM individual     ind
+INNER JOIN customer cs  ON (cs.cust_id = ind.cust_id)
+INNER JOIN account  acc ON (acc.cust_id = cs.cust_id)
+INNER JOIN branch   bc  ON (bc.branch_id = acc.open_branch_id)
+WHERE cs.city != bc.city
+UNION
+SELECT bi.name AS Clients
+FROM business 	    bi
+INNER JOIN customer cs  ON (cs.cust_id = bi.cust_id)
+INNER JOIN account  acc ON (acc.cust_id = cs.cust_id)
+INNER JOIN branch   bc  ON (bc.branch_id = acc.open_branch_id)
 WHERE cs.city != bc.city;
