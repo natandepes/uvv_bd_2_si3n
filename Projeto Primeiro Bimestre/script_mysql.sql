@@ -31,7 +31,7 @@ INNER JOIN branch   bc  ON (bc.branch_id = acc.open_branch_id)
 WHERE cs.city != bc.city
 UNION
 SELECT DISTINCT 
-      'FIS' Type
+      'JUR' Type
 ,     bi.name AS Clients
 FROM business 	    bi
 INNER JOIN customer cs  ON (cs.cust_id = bi.cust_id)
