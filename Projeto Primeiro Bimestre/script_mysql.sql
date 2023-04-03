@@ -51,9 +51,36 @@ WHERE cs.city != bc.city;
 
 SELECT
 	CONCAT(emp.fname,' ', emp.lname) AS Name
-, COUNT(trn.txn_id) 				       AS Transactions
-FROM employee 		    emp
-LEFT JOIN account 	  acc ON (acc.open_emp_id = emp.emp_id)
+, 	COUNT(trn.txn_id) 	         AS Transactions
+FROM employee 	      emp
+LEFT JOIN account     acc ON (acc.open_emp_id = emp.emp_id)
 LEFT JOIN transaction trn ON (trn.account_id = acc.account_id)
 GROUP BY Name
 ORDER BY Name, trn.txn_date;
+
+
+
+
+
+-- ---------------------------------------------------------------------------------- --
+-- 5) Escreva de novo as consultas 2. e 4. utilizando uma visualização (CREATE VIEW). --
+-- ---------------------------------------------------------------------------------- --
+
+CREATE VIEW Clients_Different AS
+SELECT DISTINCT 
+     'FIS' Type
+,    CONCAT(ind.fname,' ', ind.lname) AS Clients
+FROM individual     ind
+INNER JOIN customer cs  ON (cs.cust_id = ind.cust_id)
+INNER JOIN account  acc ON (acc.cust_id = cs.cust_id)
+INNER JOIN branch   bc  ON (bc.branch_id = acc.open_branch_id)
+WHERE cs.city != bc.city
+UNION
+SELECT DISTINCT 
+      'JUR' Type
+,     bi.name AS Clients
+FROM business 	    bi
+INNER JOIN customer cs  ON (cs.cust_id = bi.cust_id)
+INNER JOIN account  acc ON (acc.cust_id = cs.cust_id)
+INNER JOIN branch   bc  ON (bc.branch_id =  acc.open_branch_id)
+WHERE cs.city != bc.city;
