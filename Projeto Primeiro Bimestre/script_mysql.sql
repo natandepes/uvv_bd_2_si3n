@@ -61,6 +61,23 @@ ORDER BY Name, trn.txn_date;
 
 
 
+-- --------------------------------------------------------------------------------------------------------- --
+-- 4) Escreva uma consulta que retorne os identificadores de contas com maior saldo de dinheiro por agência, --
+-- juntamente com os nomes dos titulares (nome da empresa ou nome e sobrenome da pessoa física) e os         --
+-- nomes dessas agências.										     --
+-- --------------------------------------------------------------------------------------------------------- --
+
+SELECT
+	acc.account_id 	       AS Account
+,	bra.branch_id 	       AS Branch		-- A FINALIZAR AINDA !!!
+,	MAX(acc.avail_balance) AS Balance                   
+FROM account 	  acc
+INNER JOIN branch bra ON (acc.open_branch_id = bra.branch_id)
+GROUP BY Account, Branch;
+
+
+
+
 
 -- ---------------------------------------------------------------------------------- --
 -- 5) Escreva de novo as consultas 2. e 4. utilizando uma visualização (CREATE VIEW). --
@@ -75,12 +92,12 @@ INNER JOIN customer cs  ON (cs.cust_id = ind.cust_id)
 INNER JOIN account  acc ON (acc.cust_id = cs.cust_id)
 INNER JOIN branch   bc  ON (bc.branch_id = acc.open_branch_id)
 WHERE cs.city != bc.city
-UNION
+UNION								-- FALTA METADE !!!
 SELECT DISTINCT 
       'JUR' Type
 ,     bi.name AS Clients
 FROM business 	    bi
 INNER JOIN customer cs  ON (cs.cust_id = bi.cust_id)
 INNER JOIN account  acc ON (acc.cust_id = cs.cust_id)
-INNER JOIN branch   bc  ON (bc.branch_id =  acc.open_branch_id)
+INNER JOIN branch   bc  ON (bc.branch_id =  acc.open_branch_id)  
 WHERE cs.city != bc.city;
