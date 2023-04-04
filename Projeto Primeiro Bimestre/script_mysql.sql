@@ -68,15 +68,38 @@ ORDER BY Name, trn.txn_date;
 -- --------------------------------------------------------------------------------------------------------- --
 
 SELECT
-	acc.account_id 	       AS Account
-,	bra.branch_id 	       AS Branch		-- A FINALIZAR AINDA !!!
-,	MAX(acc.avail_balance) AS Balance                   
-FROM account 	  acc
-INNER JOIN branch bra ON (acc.open_branch_id = bra.branch_id)
-GROUP BY Account, Branch;
+	'FIS' Type
+,	account_id 	       		 AS Account_ID
+,	CONCAT(fname,' ', lname) AS Name
+,	name 	       			 AS Branch		
+,	ac.avail_balance 	 	 AS Balance                   
+FROM account ac	 
+INNER JOIN individual USING (cust_id)
+INNER JOIN branch 	  ON (open_branch_id = branch_id)
+INNER JOIN (
+		SELECT 
+		  branch_id AS branch_id_query
+                , MAX(avail_balance) as Max_Balance
+		  FROM account
+		  INNER JOIN branch b ON (open_branch_id = branch_id)
+		  GROUP BY open_branch_id
+	   ) top_avail ON ac.open_branch_id = branch_id_query AND ac.avail_balance = Max_Balance;
 
 
+-- QUERY PARA ME AUXILIAR !!!!!!!!!
 
+SELECT 
+     a.account_id
+,    a.avail_balance
+FROM account a
+INNER JOIN 
+    (
+        SELECT 
+            branch_id, MAX(avail_balance) as Max_Balance
+        FROM account
+		INNER JOIN branch ON (open_branch_id = branch_id)
+        GROUP BY open_branch_id
+    ) b ON a.open_branch_id = branch_id AND a.avail_balance = Max_Balance;
 
 
 -- ---------------------------------------------------------------------------------- --
