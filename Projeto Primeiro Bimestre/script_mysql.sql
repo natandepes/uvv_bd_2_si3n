@@ -4,13 +4,15 @@ USE bank;
 -- 1) Escreva uma consulta que retorne o nome e sobrenome de todos os administradores (officer) com o nome --
 -- da empresa que eles administram (business.name) e cidade onde ela está presente (customer.city).        --                                                    --
 -- ------------------------------------------------------------------------------------------------------- --
-SELECT 	ofc.fname AS First_Name
-, 		ofc.lname AS Last_Name
-, 		bi.name	  AS Business_Name
-, 		cs.city   AS City
-FROM officer 		ofc
-INNER JOIN business bi ON (ofc.cust_id = bi.cust_id)
-INNER JOIN customer cs ON (cs.cust_id = bi.cust_id);
+
+SELECT 	fname  AS First_Name
+, 	lname  AS Last_Name
+, 	name   AS Business_Name
+, 	city   AS City
+FROM officer 	    
+INNER JOIN business cs USING (cust_id)
+INNER JOIN customer bi ON (cs.cust_id = bi.cust_id);
+
 
 
 
@@ -23,20 +25,20 @@ INNER JOIN customer cs ON (cs.cust_id = bi.cust_id);
 
 SELECT DISTINCT 
      'FIS' Type
-,    CONCAT(ind.fname,' ', ind.lname) AS Clients
-FROM individual     ind
-INNER JOIN customer cs  ON (cs.cust_id = ind.cust_id)
-INNER JOIN account  acc ON (acc.cust_id = cs.cust_id)
-INNER JOIN branch   bc  ON (bc.branch_id = acc.open_branch_id)
+,   CONCAT(fname,' ', lname) AS Clients
+FROM individual 
+INNER JOIN customer   cs  USING (cust_id)
+INNER JOIN account    acc ON (acc.cust_id = cs.cust_id)
+INNER JOIN branch     bc  ON (branch_id = open_branch_id)
 WHERE cs.city != bc.city
 UNION
 SELECT DISTINCT 
       'JUR' Type
 ,     bi.name AS Clients
-FROM business 	    bi
-INNER JOIN customer cs  ON (cs.cust_id = bi.cust_id)
+FROM business 	    bi  
+INNER JOIN customer cs  USING (cust_id)
 INNER JOIN account  acc ON (acc.cust_id = cs.cust_id)
-INNER JOIN branch   bc  ON (bc.branch_id = acc.open_branch_id)
+INNER JOIN branch   bc  ON (branch_id = open_branch_id)
 WHERE cs.city != bc.city;
 
 
@@ -50,13 +52,15 @@ WHERE cs.city != bc.city;
 -- ------------------------------------------------------------------------------------------------------ --
 
 SELECT
-	CONCAT(emp.fname,' ', emp.lname) AS Name
-, 	COUNT(trn.txn_id) 	         AS Transactions
-FROM employee 	      emp
-LEFT JOIN account     acc ON (acc.open_emp_id = emp.emp_id)
-LEFT JOIN transaction trn ON (trn.account_id = acc.account_id)
-GROUP BY Name
-ORDER BY Name, trn.txn_date;
+     CONCAT(fname,' ', lname)     AS Name
+,    COALESCE(YEAR(txn_date),'')  AS Year
+,    COUNT(txn_id)                AS Transactions
+FROM employee         
+LEFT JOIN account     ON (open_emp_id = emp_id)
+LEFT JOIN transaction USING (account_id)
+GROUP BY Name, Year
+ORDER BY Name, Year;
+
 
 
 
@@ -69,37 +73,42 @@ ORDER BY Name, trn.txn_date;
 
 SELECT
 	'FIS' Type
-,	account_id 	       		 AS Account_ID
+,	account_id 	         AS Account_ID
 ,	CONCAT(fname,' ', lname) AS Name
-,	name 	       			 AS Branch		
-,	ac.avail_balance 	 	 AS Balance                   
+,	name 	       	  	 AS Branch		
+,	ac.avail_balance 	 AS Balance                   
 FROM account ac	 
 INNER JOIN individual USING (cust_id)
-INNER JOIN branch 	  ON (open_branch_id = branch_id)
+INNER JOIN branch     ON (open_branch_id = branch_id)
 INNER JOIN (
 		SELECT 
-		  branch_id AS branch_id_query
-                , MAX(avail_balance) as Max_Balance
-		  FROM account
-		  INNER JOIN branch b ON (open_branch_id = branch_id)
-		  GROUP BY open_branch_id
+		  branch_id	     AS branch_id_query
+             	, MAX(avail_balance) AS Max_Balance
+		  	FROM account
+		  	INNER JOIN branch b ON (open_branch_id = branch_id)
+		  	GROUP BY open_branch_id
+	   ) top_avail ON ac.open_branch_id = branch_id_query AND ac.avail_balance = Max_Balance
+UNION
+SELECT
+	'JUR' Type
+,	account_id 	       		
+,	bi.name 			
+,	br.name 	       		 		
+,	ac.avail_balance 	 	                  
+FROM account ac	 
+INNER JOIN business bi	USING (cust_id)
+INNER JOIN branch   br  ON (open_branch_id = branch_id)
+INNER JOIN (
+		SELECT 
+		  branch_id          AS branch_id_query
+                , MAX(avail_balance) AS Max_Balance
+		      FROM account
+		      INNER JOIN branch b ON (open_branch_id = branch_id)
+		      GROUP BY open_branch_id
 	   ) top_avail ON ac.open_branch_id = branch_id_query AND ac.avail_balance = Max_Balance;
 
 
--- QUERY PARA ME AUXILIAR !!!!!!!!!
 
-SELECT 
-     a.account_id
-,    a.avail_balance
-FROM account a
-INNER JOIN 
-    (
-        SELECT 
-            branch_id, MAX(avail_balance) as Max_Balance
-        FROM account
-		INNER JOIN branch ON (open_branch_id = branch_id)
-        GROUP BY open_branch_id
-    ) b ON a.open_branch_id = branch_id AND a.avail_balance = Max_Balance;
 
 
 -- ---------------------------------------------------------------------------------- --
@@ -109,18 +118,57 @@ INNER JOIN
 CREATE VIEW Clients_Different AS
 SELECT DISTINCT 
      'FIS' Type
-,    CONCAT(ind.fname,' ', ind.lname) AS Clients
-FROM individual     ind
-INNER JOIN customer cs  ON (cs.cust_id = ind.cust_id)
-INNER JOIN account  acc ON (acc.cust_id = cs.cust_id)
-INNER JOIN branch   bc  ON (bc.branch_id = acc.open_branch_id)
+,   CONCAT(fname,' ', lname) AS Clients
+FROM individual 
+INNER JOIN customer   cs  USING (cust_id)
+INNER JOIN account    acc ON (acc.cust_id = cs.cust_id)
+INNER JOIN branch     bc  ON (branch_id = open_branch_id)
 WHERE cs.city != bc.city
-UNION								-- FALTA METADE !!!
+UNION
 SELECT DISTINCT 
       'JUR' Type
 ,     bi.name AS Clients
-FROM business 	    bi
-INNER JOIN customer cs  ON (cs.cust_id = bi.cust_id)
+FROM business 	    bi  
+INNER JOIN customer cs  USING (cust_id)
 INNER JOIN account  acc ON (acc.cust_id = cs.cust_id)
-INNER JOIN branch   bc  ON (bc.branch_id =  acc.open_branch_id)  
+INNER JOIN branch   bc  ON (branch_id = open_branch_id)
 WHERE cs.city != bc.city;
+
+
+
+CREATE VIEW Biggest_Balances AS
+SELECT
+	'FIS' Type
+,	account_id 	         AS Account_ID
+,	CONCAT(fname,' ', lname) AS Name
+,	name 	       	  	 AS Branch		
+,	ac.avail_balance 	 AS Balance                   
+FROM account ac	 
+INNER JOIN individual USING (cust_id)
+INNER JOIN branch     ON (open_branch_id = branch_id)
+INNER JOIN (
+		SELECT 
+		  branch_id	     AS branch_id_query
+             	, MAX(avail_balance) AS Max_Balance
+		  	FROM account
+		  	INNER JOIN branch b ON (open_branch_id = branch_id)
+		  	GROUP BY open_branch_id
+	   ) top_avail ON ac.open_branch_id = branch_id_query AND ac.avail_balance = Max_Balance
+UNION
+SELECT
+	'JUR' Type
+,	account_id 	       		
+,	bi.name 			
+,	br.name 	       		 		
+,	ac.avail_balance 	 	                  
+FROM account ac	 
+INNER JOIN business bi	USING (cust_id)
+INNER JOIN branch   br  ON (open_branch_id = branch_id)
+INNER JOIN (
+		SELECT 
+		  branch_id          AS branch_id_query
+                , MAX(avail_balance) AS Max_Balance
+		      FROM account
+		      INNER JOIN branch b ON (open_branch_id = branch_id)
+		      GROUP BY open_branch_id
+	   ) top_avail ON ac.open_branch_id = branch_id_query AND ac.avail_balance = Max_Balance;
